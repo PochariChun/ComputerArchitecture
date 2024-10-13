@@ -1,16 +1,9 @@
-#include <stdint.h>
+#include "float_converter.h"
 #include <stdio.h>
 #include <math.h>
 
-// Function prototypes
-void print_binary32(uint32_t n);
-void print_binary16(uint16_t n);
-
-// Define fp16_t as a 16-bit unsigned integer
-typedef uint16_t fp16_t;
-
 // Convert a float to its bit representation as a uint32_t
-static inline uint32_t fp32_to_bits(float f) {
+uint32_t fp32_to_bits(float f) {
     union {
         float as_value;
         uint32_t as_bits;
@@ -19,7 +12,7 @@ static inline uint32_t fp32_to_bits(float f) {
 }
 
 // Convert a uint32_t bit pattern to a float
-static inline float bits_to_fp32(uint32_t bits) {
+float bits_to_fp32(uint32_t bits) {
     union {
         uint32_t as_bits;
         float as_value;
@@ -28,19 +21,10 @@ static inline float bits_to_fp32(uint32_t bits) {
 }
 
 // Convert a float (32-bit) to fp16 (16-bit)
-static inline fp16_t fp32_to_fp16(float f) {
+fp16_t fp32_to_fp16(float f) {
     const float scale_to_inf = 0x1.0p+112f;
     const float scale_to_zero = 0x1.0p-110f;
-    // printf("scale_to_inf: %f\n", scale_to_inf);
-    printf("scale_to_inf: ");
-    print_binary32(fp32_to_bits(scale_to_inf));
-    // printf("scale_to_zero: %f\n", scale_to_zero);
-    printf("scale_to_zero: ");
-    print_binary32(fp32_to_bits(scale_to_zero));
     float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
-    printf("base: %f\n", base);
-    printf("base binary: ");
-    print_binary32(fp32_to_bits(base));
     const uint32_t w = fp32_to_bits(f);
     const uint32_t shl1_w = w + w;
     const uint32_t sign = w & UINT32_C(0x80000000);
@@ -62,7 +46,7 @@ static inline fp16_t fp32_to_fp16(float f) {
 }
 
 // Convert a 16-bit fp16 to 32-bit float
-static inline float fp16_to_fp32(fp16_t h) {
+float fp16_to_fp32(fp16_t h) {
     const uint32_t w = (uint32_t)h << 16;
     const uint32_t sign = w & UINT32_C(0x80000000);
     const uint32_t two_w = w + w;
@@ -84,60 +68,26 @@ static inline float fp16_to_fp32(fp16_t h) {
     return bits_to_fp32(result);
 }
 
+// Print binary representation of a 32-bit value
 void print_binary32(uint32_t n) {
-    printf("%d | ", (n >> 31) & 1);  // Sign bit (1 bit)
-
-    // Exponent bits (8 bits)
-    for (int i = 30; i >= 23; i--) {
-        printf("%d", (n >> i) & 1);
-    }
+    printf("%d | ", (n >> 31) & 1);
+    for (int i = 30; i >= 23; i--) printf("%d", (n >> i) & 1);
     printf(" | ");
-
-    // Mantissa bits (23 bits)
     for (int i = 22; i >= 0; i--) {
         printf("%d", (n >> i) & 1);
-        if (i % 4 == 0 && i != 0) printf(" ");  // Space every 4 bits (optional)
+        if (i % 4 == 0 && i != 0) printf(" ");
     }
     printf("\n");
 }
 
-// Print binary representation of a 16-bit floating-point value (1 | 5 | 10)
+// Print binary representation of a 16-bit value
 void print_binary16(uint16_t n) {
-    printf("%d | ", (n >> 15) & 1);  // Sign bit (1 bit)
-
-    // Exponent bits (5 bits)
-    for (int i = 14; i >= 10; i--) {
-        printf("%d", (n >> i) & 1);
-    }
+    printf("%d | ", (n >> 15) & 1);
+    for (int i = 14; i >= 10; i--) printf("%d", (n >> i) & 1);
     printf(" | ");
-
-    // Mantissa bits (10 bits)
     for (int i = 9; i >= 0; i--) {
         printf("%d", (n >> i) & 1);
-        if (i % 5 == 0 && i != 0) printf(" ");  // Space every 5 bits (optional)
+        if (i % 5 == 0 && i != 0) printf(" ");
     }
     printf("\n");
-}
-
-
-int main() {
-    float test_value = 3.14159f;  // Example input
-    printf("Original float: %f\n", test_value);
-    printf("fp32 binary: ");
-    print_binary32(fp32_to_bits(test_value));
-    printf("\n");
-
-    // Convert to fp16 and print the binary representation
-    fp16_t result_fp16 = fp32_to_fp16(test_value);
-    printf("fp16 binary: ");
-    print_binary16(result_fp16);
-    printf("\n");
-
-    // Convert back to float and print
-    float restored_value = fp16_to_fp32(result_fp16);
-    printf("fp32 binary: ");
-    print_binary32(fp32_to_bits(restored_value));
-    printf("Restored float from fp16: %f\n", restored_value);
-
-    return 0;
 }
