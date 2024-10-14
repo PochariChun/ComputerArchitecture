@@ -11,7 +11,10 @@ uint32_t fp32_to_bits(float f);
 float bits_to_fp32(uint32_t bits);
 fp16_t fp32_to_fp16(float f);
 float fp16_to_fp32(fp16_t h);
-void print_binary32(uint32_t n);
+
+// Updated declaration for print_binary32 with label
+void print_binary32(const char *label, uint32_t n);
+
 void print_binary16(uint16_t n);
 
 #endif  // FLOAT_CONVERTER_H

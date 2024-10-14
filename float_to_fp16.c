@@ -1,4 +1,5 @@
 #include "float_converter.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -24,7 +25,23 @@ float bits_to_fp32(uint32_t bits) {
 fp16_t fp32_to_fp16(float f) {
     const float scale_to_inf = 0x1.0p+112f;
     const float scale_to_zero = 0x1.0p-110f;
-    float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
+    
+    // Calculate intermediate values
+    float abs_f = fabsf(f);
+    float scaled_inf = abs_f * scale_to_inf;
+    float base = scaled_inf * scale_to_zero;
+
+    // Print the intermediate values and their binary representations
+    printf("fabsf(f) = %f\n", abs_f);
+    print_binary32("fabsf(f) binary", fp32_to_bits(abs_f));
+
+    printf("fabsf(f) * scale_to_inf = %f\n", scaled_inf);
+    print_binary32("scaled_inf binary", fp32_to_bits(scaled_inf));
+
+    printf("base = %f\n", base);
+    print_binary32("base binary", fp32_to_bits(base));
+
+
     const uint32_t w = fp32_to_bits(f);
     const uint32_t shl1_w = w + w;
     const uint32_t sign = w & UINT32_C(0x80000000);
@@ -68,17 +85,18 @@ float fp16_to_fp32(fp16_t h) {
     return bits_to_fp32(result);
 }
 
-// Print binary representation of a 32-bit value
-void print_binary32(uint32_t n) {
-    printf("%d | ", (n >> 31) & 1);
-    for (int i = 30; i >= 23; i--) printf("%d", (n >> i) & 1);
+// Print binary representation of a 32-bit value with a label
+void print_binary32(const char *label, uint32_t n) {
+    printf("%s: %d | ", label, (n >> 31) & 1);  // Print label and sign bit
+    for (int i = 30; i >= 23; i--) printf("%d", (n >> i) & 1);  // Exponent
     printf(" | ");
-    for (int i = 22; i >= 0; i--) {
+    for (int i = 22; i >= 0; i--) {  // Mantissa
         printf("%d", (n >> i) & 1);
         if (i % 4 == 0 && i != 0) printf(" ");
     }
     printf("\n");
 }
+
 
 // Print binary representation of a 16-bit value
 void print_binary16(uint16_t n) {

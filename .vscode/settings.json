@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "float_converter.h": "c",
+        "stdint.h": "c"
+    }
+}
